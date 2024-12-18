@@ -1,0 +1,17 @@
+---
+title: "About"
+---
+
+
+# Welcome
+
+<span style="color: #3498db; font-size: 24px;">About this site!</span>
+
+<div style="background-color: #f4f4f9; padding: 10px; border-radius: 5px;">
+
+This is a project made by a group of 5 friends in order to analyse the dependencies there is between the job offers and the patents in companies
+</div>
+
+
+
+

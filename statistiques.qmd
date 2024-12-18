@@ -1,0 +1,352 @@
+# My Analysis Page
+## Base BREVETS
+<div class="graph-section">
+  <h2>Numérique</h2>
+  <p>This graph shows the relationship between X and Y variables.</p>
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Load the required libraries
+
+library(readr)
+library(dplyr)
+library(knitr)
+library(kableExtra)
+
+# Load the data from the CSV file
+base_brevets <- read_delim(
+  "data/base_brevets.csv",
+  delim = ";",
+  col_names = TRUE,
+  col_types = cols(.default = "c"), # Treat all columns as character
+  trim_ws = TRUE
+)
+
+# Ensure the 'n_patents' column is numeric for statistical calculations
+base_brevets <- base_brevets %>%
+  mutate(n_patents = as.numeric(n_patents))
+
+# Compute summary statistics for the 'n_patents' column
+summary_stats_brevets <- base_brevets %>%
+  summarise(
+    minimum = min(n_patents, na.rm = TRUE),
+    médiane = median(n_patents, na.rm = TRUE),
+    maximum = max(n_patents, na.rm = TRUE),
+    moyenne = mean(n_patents, na.rm = TRUE),
+    `écart-type` = sd(n_patents, na.rm = TRUE),
+    `nombre de manquants` = sum(is.na(n_patents))
+  ) %>%
+  mutate(Variable = "n_patents") %>%
+  relocate(Variable)
+
+# Create an HTML table with styling
+kable(summary_stats_brevets, 
+      format = "html", 
+      col.names = c("Variable", "Minimum", "Médiane", "Maximum", "Moyenne", 
+                    "Écart-type", "Nombre de manquants")) %>%
+  kable_styling(full_width = TRUE, 
+                position = "center", 
+                bootstrap_options = c("striped", "hover", "condensed", 
+                                      "responsive", "bordered")) %>%
+  column_spec(1, background = "#d4e1e1", color = "#406f71", bold = TRUE) %>%
+  row_spec(0, background = "#406f71", color = "white", bold = TRUE)
+
+```
+</div> 
+
+
+<div class="graph-section">
+  <h2>Caractères </h2>
+  <p>This graph shows the relationship between X and Y variables.</p>
+```{r}
+# Function to extract the top 5 by a specified variable
+top_5_by_variable_combined <- function(data, variable, label) {
+  data %>%
+    group_by(across(all_of(variable))) %>%
+    summarise(`Nombres de brevets` = sum(n_patents, na.rm = TRUE), .groups = "drop") %>%
+    arrange(desc(`Nombres de brevets`)) %>%
+    slice_head(n = 5) %>%
+    mutate(Variable = label) %>%
+    rename(Valeur = !!sym(variable)) %>%
+    mutate(Valeur = as.character(Valeur))
+}
+
+# Generate summaries for each variable
+top_firm <- top_5_by_variable_combined(base_brevets, "firm_name", "Firm Name")
+top_ipc <- top_5_by_variable_combined(base_brevets, "ipc_main_desc", "IPC Main Description")
+top_city <- top_5_by_variable_combined(base_brevets, "addr_city_main", "City")
+top_dept <- top_5_by_variable_combined(base_brevets, "addr_dept_main", "Department")
+
+# Combine all summaries
+summary_combined <- bind_rows(
+  top_firm %>% mutate(Section = "Firm Name"),
+  top_ipc %>% mutate(Section = "IPC Main Description"),
+  top_city %>% mutate(Section = "City"),
+  top_dept %>% mutate(Section = "Department")
+)
+
+# Format the summary table
+summary_combined <- summary_combined %>%
+  select(Section, Valeur, `Nombres de brevets`) %>%
+  arrange(Section)
+
+# Generate the HTML table with styling
+kable(summary_combined %>% select(-Section),
+      format = "html",
+      col.names = c("Valeur", "Nombres de brevets")) %>%
+  kable_styling(
+    full_width = TRUE,
+    position = "center",
+    bootstrap_options = c("striped", "hover", "condensed", "responsive", "bordered")
+  ) %>%
+  column_spec(1, background = "#d4e1e1", color = "#406f71", bold = TRUE) %>%
+  row_spec(0, background = "#406f71", color = "white", bold = TRUE) %>%
+  pack_rows("Firm Name", 1, nrow(top_firm), background = "#406f71", color = "white", bold = TRUE) %>%
+  pack_rows("IPC Main Description", nrow(top_firm) + 1, nrow(top_firm) + nrow(top_ipc),
+            background = "#406f71", color = "white", bold = TRUE) %>%
+  pack_rows("City", nrow(top_firm) + nrow(top_ipc) + 1, nrow(top_firm) + nrow(top_ipc) + nrow(top_city),
+            background = "#406f71", color = "white", bold = TRUE) %>%
+  pack_rows("Department", nrow(top_firm) + nrow(top_ipc) + nrow(top_city) + 1, nrow(summary_combined),
+            background = "#406f71", color = "white", bold = TRUE)
+```
+
+</div> 
+
+## Base EMPLOIS
+<div class="graph-section">
+  <h2>Numérique </h2>
+  <p>This graph shows the relationship between X and Y variables.</p>
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+# Load the required libraries
+library(readr)
+library(dplyr)
+library(knitr)
+library(kableExtra)
+
+# Load the data from the CSV file
+base_emp <- read_delim(
+  "data/base_emp.csv",
+  delim = ";",
+  col_names = TRUE,
+  col_types = cols(.default = "c"), # Treat all columns as character
+  trim_ws = TRUE
+)
+
+# Ensure relevant columns are numeric for calculations
+base_emp <- base_emp %>%
+  mutate(
+    n_offres = as.numeric(n_offres),
+    avg_wage = as.numeric(avg_wage)
+  )
+
+# Calculate summary statistics for 'n_offres'
+summary_stats_offres <- base_emp %>%
+  ungroup() %>%
+  summarise(
+    minimum = min(n_offres, na.rm = TRUE),
+    médiane = median(n_offres, na.rm = TRUE),
+    maximum = max(n_offres, na.rm = TRUE),
+    moyenne = mean(n_offres, na.rm = TRUE),
+    `écart-type` = sd(n_offres, na.rm = TRUE),
+    `nombre de manquants` = sum(is.na(n_offres))
+  ) %>%
+  mutate(Variable = "n_offres") %>%
+  relocate(Variable)
+
+# Calculate summary statistics for 'avg_wage'
+summary_stats_wage <- base_emp %>%
+  ungroup() %>%
+  summarise(
+    minimum = min(avg_wage, na.rm = TRUE),
+    médiane = median(avg_wage, na.rm = TRUE),
+    maximum = max(avg_wage, na.rm = TRUE),
+    moyenne = mean(avg_wage, na.rm = TRUE),
+    `écart-type` = sd(avg_wage, na.rm = TRUE),
+    `nombre de manquants` = sum(is.na(avg_wage))
+  ) %>%
+  mutate(Variable = "avg_wage") %>%
+  relocate(Variable)
+
+# Combine summary statistics
+summary_stats_emp <- bind_rows(summary_stats_offres, summary_stats_wage)
+
+# Rename columns for clarity
+colnames(summary_stats_emp) <- c(
+  "Variables", "Minimum", "Médiane", "Maximum", 
+  "Moyenne", "Écart-type", "Nombre de manquants"
+)
+
+# Create a formatted HTML table
+kable(summary_stats_emp,
+      format = "html",
+      col.names = colnames(summary_stats_emp)) %>%
+  kable_styling(
+    full_width = TRUE,
+    position = "center",
+    bootstrap_options = c("striped", "hover", "condensed", "responsive", "bordered")
+  ) %>%
+  column_spec(1, background = "#d4e1e1", color = "#406f71", bold = TRUE) %>%
+  row_spec(0, background = "#406f71", color = "white", bold = TRUE)
+
+```
+</div> 
+<div class="graph-section">
+  <h2>Caractères </h2>
+  <p>This graph shows the relationship between X and Y variables.</p>
+```{r}
+library(tidyr)
+library(stringr)
+# Ensure relevant columns are numeric for calculations
+base_emp <- base_emp %>%
+  mutate(
+    avg_wage = as.numeric(avg_wage),
+    n_offres = as.numeric(n_offres)
+  )
+
+# Function to expand and clean sector data
+expand_sectors <- function(data, sector_column) {
+  data |>
+    mutate(sector_main = str_split(sector_main, ",")) |> 
+    unnest(sector_main) |> 
+    mutate(sector_main = str_trim(sector_main))
+}
+
+
+# Expand 'sector_main' column
+base_emp_expanded <- expand_sectors(base_emp, "sector_main")
+
+# Function to compute top 5 based on salary
+top_5_by_variable_combined_salary <- function(data, variable, label) {
+  data %>%
+    group_by(across(all_of(variable))) %>%
+    summarise(`Salaire moyen` = mean(avg_wage, na.rm = TRUE), .groups = "drop") %>%
+    arrange(desc(`Salaire moyen`)) %>%
+    slice_head(n = 5) %>%
+    mutate(Variable = label) %>%
+    rename(Valeur = !!sym(variable)) %>%
+    mutate(Valeur = as.character(Valeur))
+}
+
+# Generate top 5 summaries for salary
+top_firm_salary <- top_5_by_variable_combined_salary(base_emp, "firm_name", "Firm Name")
+top_sector_salary <- top_5_by_variable_combined_salary(base_emp_expanded, "sector_main", "Sector Main")
+top_dept_salary <- top_5_by_variable_combined_salary(base_emp, "addr_dept_main", "Department")
+
+# Combine all salary summaries
+summary_combined_salary <- bind_rows(
+  top_firm_salary %>% mutate(Section = "Entreprise"),
+  top_sector_salary %>% mutate(Section = "Secteur principal"),
+  top_dept_salary %>% mutate(Section = "Département")
+)
+
+# Prepare the combined summary table
+summary_combined_salary <- summary_combined_salary %>%
+  select(Section, Valeur, `Salaire moyen`) %>%
+  arrange(Section)
+
+# Create the styled HTML table
+kable(summary_combined_salary %>% select(-Section),
+      format = "html",
+      col.names = c("", "Salaire moyen")) %>%
+  kable_styling(
+    full_width = TRUE,
+    position = "center",
+    bootstrap_options = c("striped", "hover", "condensed", "responsive", "bordered")
+  ) %>%
+  column_spec(1, background = "#d4e1e1", color = "#406f71", bold = TRUE) %>%
+  row_spec(0, background = "#406f71", color = "white", bold = TRUE) %>%
+  pack_rows("Département", 
+            start_row = 1, 
+            end_row = nrow(top_firm_salary), 
+            background = "#406f71", 
+            color = "white", 
+            bold = TRUE) %>%
+  pack_rows("Entreprise", 
+            start_row = nrow(top_firm_salary) + 1, 
+            end_row = nrow(top_firm_salary) + nrow(top_sector_salary), 
+            background = "#406f71", 
+            color = "white", 
+            bold = TRUE) %>%
+  pack_rows("Secteur principal", 
+            start_row = nrow(top_firm_salary) + nrow(top_sector_salary) + 1, 
+            end_row = nrow(summary_combined_salary), 
+            background = "#406f71", 
+            color = "white", 
+            bold = TRUE)
+```
+</div> 
+
+
+## Base EMPLOIS-INNOVATIONS
+<div class="graph-section">
+  <h2>Caractères </h2>
+  <p>This graph shows the relationship between X and Y variables.</p>
+```{r}
+
+# Load the required library
+library(readr)
+
+# Read the base_emp_inno dataset
+base_emp_inno <- read_delim(
+  "data/base_emp_inno.csv",  # Path to the CSV file
+  delim = ";",              # Delimiter used in the CSV file
+  col_names = TRUE,         # Use the first row as column names
+  col_types = cols(
+    .default = "c",         # Treat all columns as character by default
+    n_patents = "n",        # Parse 'n_patents' as numeric
+    n_offres = "n",         # Parse 'n_offres' as numeric
+    avg_wage = "n"          # Parse 'avg_wage' as numeric
+  ),
+  trim_ws = TRUE            # Trim whitespace from character strings
+)
+
+summary_stats_brevets <- base_emp_inno |> 
+  summarise(minimum = min(n_patents, na.rm = TRUE),
+            médiane = median(n_patents, na.rm = TRUE),
+            maximum = max(n_patents, na.rm = TRUE),
+            moyenne = mean(n_patents, na.rm = TRUE),
+            `écart-type` = sd(n_patents, na.rm = TRUE),
+            `nombre de manquants` = sum(is.na(n_patents))) |> 
+  mutate(Variable = "n_patents") |> 
+  relocate(Variable)
+
+
+summary_stats_offre <- base_emp_inno |> 
+  summarise(minimum = min(n_offres, na.rm = TRUE),
+            médiane = median(n_offres, na.rm = TRUE),
+            maximum = max(n_offres, na.rm = TRUE),
+            moyenne = mean(n_offres, na.rm = TRUE),
+            `écart-type` = sd(n_offres, na.rm = TRUE),
+            `nombre de manquants` = sum(is.na(n_offres))) |> 
+  mutate(Variable = "n_offres") |> 
+  relocate(Variable)
+
+summary_stats_wage <- base_emp_inno |> 
+  summarise(minimum = min(avg_wage, na.rm = TRUE),
+            médiane = median(avg_wage, na.rm = TRUE),
+            maximum = max(avg_wage, na.rm = TRUE),
+            moyenne = mean(avg_wage, na.rm = TRUE),
+            `écart-type` = sd(avg_wage, na.rm = TRUE),
+            `nombre de manquants` = sum(is.na(avg_wage))) |> 
+  mutate(Variable = "avg_wage") |> 
+  relocate(Variable)
+
+summary_stats_all <- bind_rows(summary_stats_brevets, 
+                               summary_stats_offre, 
+                               summary_stats_wage)
+
+colnames(summary_stats_all) <- c("Variables", "Minimum", "Médiane", "Maximum", 
+                                 "Moyenne", "Écart-type", "Nombre de manquants")
+
+kable(summary_stats_all, 
+      format = "html", 
+      col.names = c("Variables", "Minimum", "Médiane", "Maximum", "Moyenne", 
+                    "Écart-type", "Nombre de manquants")) |> 
+  kable_styling(full_width = TRUE, 
+                position = "center", 
+                bootstrap_options = c("striped", "hover", "condensed", 
+                                      "responsive", "bordered")) |> 
+  column_spec(1, background = "#d4e1e1", color = "#406f71", bold = TRUE) |> 
+  row_spec(0, background = "#406f71", color = "white", bold = TRUE)
+
+```
+</div> 
+

@@ -1,0 +1,24 @@
+project:
+  type: website
+  output-dir: docs
+
+website:
+  title: "Project"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - about.qmd
+      - text: Statistiques
+        href: statistiques.qmd
+
+format:
+  html:
+    theme: pulse
+    css: styles.css
+    toc: true
+
+
+execute:
+  echo: false
+
